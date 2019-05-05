@@ -1,3 +1,8 @@
+def Setconfig(sensor_flag, setter, where) :
+    flags = setter << where
+    sensor_flag &= flags
+W1=0.0,W2=0.0,W3=0.0,W4=0.0
+
 import os, sys, time # argv[1] is window status
 import enum
 
@@ -30,5 +35,58 @@ if motion_flag == 1 :
 
 user_config_file = open("여기에 경로 적어야 함.txt",r)
 user_config = int(user_config_file.readline())
+############# 임시 제작 #########################
+
+SetConfig(sensor_flag, user_config,3)
+rain_flag = int(os.system("python ./outer/rain.py 20")
+if rain_flag == 1 :
+    sensor_flag = sensor_flag | SENSOR_FLAG.RAIN
+
+weightDust = float(os.system("python ./outer/PMS7003.py 20"))
+WHO = float(os.system("python ./outer/dht11.py 20")) #WHO is Weight Huminity outer
+WHI = float(os.system("python ./inner/dht11_2.py 20")) # WHI is Weight Huminity inner
+if abs(WHI - WHO) >= 0.1 :
+    if WHI <= 0.4 || WHI >= 0.6 :
+        WHG = WHI - WHO
+if (W1 * weightDust + W2 * WHG) > 1 :
+    weighted_m_flag = 1
+else :
+    weighted_m_flag = 0
+
+weightLight = float(os.system("python ./outer/light.py 20"))
+WTO = float(os.system("python ./outer/dht11.py 20"))
+WHI = float(os.system("python ./inner/dht11.py 20"))
+WHG = WHI - WTO # Weight Temperature Gap = weight temperature inner - weight temperature outer
+if (W3 * weightLight + W4 * WHG) > 1 :
+    weighted_f_flag = 1
+else :
+    weighted_f_flag = 0
+
+if weighted_m_flag == 1 :
+    sensor_flag = sensor_flag | SENSOR_FLAG.WEIGHTED_M
+if weighted_f_flag == 1 :
+    sensor_flag = sensor_flag | SENSOR_FLAG.WEIGHTED_F
+
+
+SetWindow(sensor_flag)
+users = SearchUser()
+for user in users :
+    if !(push_msg_flags) :
+        pushMassage()
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
 
 
