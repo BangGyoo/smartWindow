@@ -5,13 +5,11 @@ import sys
 GPIO.setmode(GPIO.BCM)
 pin = 21
 GPIO.setup(pin, GPIO.IN)
-print "Waiting for sensor to settle"
-print "Detecting motion"
 loop = 0
 while loop < int(sys.argv[1]) :
-    if GPIO.input(pin):
+    if not(GPIO.input(pin)):
         print "0"
-    else :
-        print "1"
-    time.sleep(0.01)
+        sys.close()
     loop+=1
+print "1"
+

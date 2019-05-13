@@ -6,7 +6,8 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(3, GPIO.IN , pull_up_down=GPIO.PUD_DOWN)
 
 def action(pin) :
-    print ("MQ5 error")
+    print ("1")
+    sys.exit()
     return
 
 GPIO.add_event_detect(3, GPIO.RISING)
@@ -18,6 +19,7 @@ try :
         print('alive')
         time.sleep(0.5)
         loop += 1
+    print("0")
     sys.exit()
 
 except KeyboardInterrupt :

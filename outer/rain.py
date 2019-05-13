@@ -8,14 +8,9 @@ GPIO.setup(pin, GPIO.IN)
 
 loop = 0
 while loop < int(sys.argv[1]):
-    if GPIO.input(pin):
-        active_time = time.time()
-        print("No Rain Detected")
-        print(active_time)
-        time.sleep(0.1)
-    else:
-        active_time = time.time()
-        print("Rain Detected!")
-        print(active_time)
-        time.sleep(0.1)
+    if not(GPIO.input(pin)) :
+        print("1")
+        sys.close()   
     loop += 1
+print("0")
+

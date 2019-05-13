@@ -1,7 +1,7 @@
 import serial
 import struct
 import time
-
+import sys
 
 class PMS7003(object):
 
@@ -112,20 +112,7 @@ class PMS7003(object):
     chksum = self.chksum_cal(buffer)
     data = self.unpack_data(buffer)
 
-    print ("============================================================================")
-    print ("Header : %c %c \t\t | Frame length : %s" % (data[self.HEADER_HIGH], data[self.HEADER_LOW], data[self.FRAME_LENGTH]))
-    print ("PM 1.0 (CF=1) : %s\t | PM 1.0 : %s" % (data[self.DUST_PM1_0_CF1], data[self.DUST_PM1_0_ATM]))
-    print ("PM 2.5 (CF=1) : %s\t | PM 2.5 : %s" % (data[self.DUST_PM2_5_CF1], data[self.DUST_PM2_5_ATM]))
-    print ("PM 10.0 (CF=1) : %s\t | PM 10.0 : %s" % (data[self.DUST_PM10_0_CF1], data[self.DUST_PM10_0_ATM]))
-    print ("0.3um in 0.1L of air : %s" % (data[self.DUST_AIR_0_3]))
-    print ("0.5um in 0.1L of air : %s" % (data[self.DUST_AIR_0_5]))
-    print ("1.0um in 0.1L of air : %s" % (data[self.DUST_AIR_1_0]))
-    print ("2.5um in 0.1L of air : %s" % (data[self.DUST_AIR_2_5]))
-    print ("5.0um in 0.1L of air : %s" % (data[self.DUST_AIR_5_0]))
-    print ("10.0um in 0.1L of air : %s" % (data[self.DUST_AIR_10_0]))
-    print ("Reserved F : %s | Reserved B : %s" % (data[self.RESERVEDF],data[self.RESERVEDB]))
-    print ("CHKSUM : %s | read CHKSUM : %s | CHKSUM result : %s" % (chksum, data[self.CHECKSUM], chksum == data[self.CHECKSUM]))
-    print ("============================================================================")
+    print ("%s" % (data[self.DUST_AIR_2_5]))
 
 
 
@@ -147,15 +134,14 @@ if __name__=='__main__':
   ser = serial.Serial(SERIAL_PORT, Speed, timeout = 1)
 
   dust = PMS7003()
-
-  while True:
-    
+  loop = 0
+  while loop < int(sys.argv[1]) :
+    loop+=1
     ser.flushInput()
     buffer = ser.read(1024)
 
     if(dust.protocol_chk(buffer)):
     
-      print("DATA read success")
     
       # print data
       dust.print_serial(buffer)
