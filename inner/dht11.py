@@ -3,5 +3,4 @@ import RPi.GPIO as GPIO
 import sys #  argv[1] is loop count
 import time
 
-print("25.0")
-
+print("12")
