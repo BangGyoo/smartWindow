@@ -74,8 +74,12 @@ try :
 			output_flag[4] = True
 		############ set WHG(WHGab = WHO(Weight Humidity Outer) - WHI(Weight Humidity Inner)), dust
 		weightDust = float(os.system("python3 ./outer/PMS7003.py 20"))
-		WHO = float(os.system("python3 ./outer/dht11.py 20"))
-		WHI = float(os.system("python3 ./inner/dht11.py 20"))
+		WO = (os.system("python3 ./outer/dht11.py 20"))
+		WHO = float(WO[0:5])
+		WTO = float(WO[5:10])
+		WI = (os.system("python3 ./inner/dht11.py 20"))
+		WHI = float(WI[0:5])
+		WTI = float(WI[5:10])
 		WHG = 0.0
 		if abs(WHI - WHO) >= 0.1 :
 			if WHI <= 0.4 or WHI >= 0.6 :
@@ -88,8 +92,6 @@ try :
 			weighted_m_flag = False
 		########### set WTG(WTGab = WTI(Weight Temperature Outer) - WTO(Weight Temperature Inner)), light
 		weightLight = float(os.system("python3 ./outer/light.py 20"))
-		WTO = float(os.system("python3 ./outer/dht11.py 20"))
-		WTI = float(os.system("python3 ./inner/dht11.py 20"))
 		WTG = WTI - WTO
 		if (W3 * weightLight + W4 * WHG) > 1 :
 			weighted_f_flag = True

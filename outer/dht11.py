@@ -19,10 +19,10 @@ averge_t = 0.0
 while loop < int(sys.argv[1]) :
     if humidity is not None and temperature is not None:
         humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
-        average_h += (float)humidity
-        average_t += (float)temperature
+        average_h += float(humidity)
+        average_t += float(temperature)
     else:
-        print "Failed to get reading."
+        print("Failed to get reading.")
     loop += 1
     
 average_t = average_t / int(sys.argv[1])

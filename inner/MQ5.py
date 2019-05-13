@@ -13,11 +13,11 @@ def action(pin) :
 GPIO.add_event_detect(3, GPIO.RISING)
 GPIO.add_event_callback(3, action)
 
+
+
 try :
     loop = 0
     while loop < int(sys.argv[1]):
-        print('alive')
-        time.sleep(0.5)
         loop += 1
     print("0")
     sys.exit()

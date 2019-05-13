@@ -8,5 +8,5 @@ loop = 0
 while loop < int(sys.argv[1]) :
 	if not(GPIO.input(18)) :
 		print("1")
-		sys.close()
+		sys.exit()
 print("0")
