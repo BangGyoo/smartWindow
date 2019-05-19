@@ -9,4 +9,5 @@ while loop < int(sys.argv[1]) :
 	if not(GPIO.input(18)) :
 		print("1")
 		sys.exit()
+	loop+=1
 print("0")

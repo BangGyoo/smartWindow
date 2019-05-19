@@ -13,8 +13,8 @@ pin = 4
 humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
 
 loop = 0
-aveage_h = 0.0
-averge_t = 0.0
+average_h = 0.0
+average_t = 0.0
 
 while loop < int(sys.argv[1]) :
     if humidity is not None and temperature is not None:

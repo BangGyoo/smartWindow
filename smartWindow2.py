@@ -53,13 +53,13 @@ try :
 	while i < 5 :
 		i+=1
 		#############set gas############################
-		gas_flag   = int(subprocess.run("python3 ./inner/MQ2.py 20",shell=True))
-		smoke_flag = int(subprocess.run("python3 ./inner/MQ5.py 20"))
+		gas_flag   = int(subprocess.check_output("python3 ./inner/MQ2.py 20",shell=True))
+		smoke_flag = int(subprocess.check_output("python3 ./inner/MQ5.py 20",shell=True))
 		if gas_flag == 1 or smoke_flag == 1 : # else는 처리하지 않는다. 감지시 1set
 			sensor_flag[0] = True
 			output_flag[0] = True
 		#############set motion#######################
-		motion_flag = int(subprocess.run("python3 ./outer/motion.py 20",shell=True))
+		motion_flag = int(subprocess.check_output("python3 ./outer/motion.py 20",shell=True))
 		if motion_flag == 1 :
 			sensor_flag[1] = True
 			output_flag[1] = True
@@ -68,17 +68,17 @@ try :
 		user_config = int(user_config_file.readline())
 
 		SetConfig(sensor_flag,output_flag,user_config,2)
-		rain_flag = int(subprocess.run("python3 ./outer/rain.py 20",shell=True))
+		rain_flag = int(subprocess.check_output("python3 ./outer/rain.py 20",shell=True))
 		#############set rain##############################
 		if rain_flag == 1 :
 			sensor_flag[4] = True
 			output_flag[4] = True
 		############ set WHG(WHGab = WHO(Weight Humidity Outer) - WHI(Weight Humidity Inner)), dust
-		weightDust = float(subprocess.run("python3 ./outer/PMS7003.py 20",shell=True))
-		WO = (subprocess.run("python3 ./outer/dht11.py 20",shell=True))
+		weightDust = float(subprocess.check_output("python3 ./outer/PMS7003.py 1",shell=True))
+		WO = (subprocess.check_output("python3 ./outer/dht11.py 20",shell=True))
 		WHO = float(WO[0:5])
 		WTO = float(WO[5:10])
-		WI = (subprocess.run("python3 ./inner/dht11.py 20",shell=True))
+		WI = (subprocess.check_output("python3 ./inner/dht11.py 20",shell=True))
 		WHI = float(WI[0:5])
 		WTI = float(WI[5:10])
 		WHG = 0.0
@@ -92,7 +92,7 @@ try :
 		else :
 			weighted_m_flag = False
 		########### set WTG(WTGab = WTI(Weight Temperature Outer) - WTO(Weight Temperature Inner)), light
-		weightLight = float(subprocess.run("python3 ./outer/light.py 20",shell=True))
+		weightLight = float(subprocess.check_output("python3 ./outer/light.py 20",shell=True))
 		WTG = WTI - WTO
 		if (W3 * weightLight + W4 * WHG) > 1 :
 			weighted_f_flag = True

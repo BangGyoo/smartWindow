@@ -1,26 +1,16 @@
-import RPi.GPIO as GPIO # argv[1] is searching count
-import time, sys
+import time
+import RPi.GPIO as GPIO
+import sys # argv[1] is loop count
 
+pin = 3
 GPIO.setmode(GPIO.BCM)
+GPIO.setup(pin, GPIO.IN)
 
-GPIO.setup(3, GPIO.IN , pull_up_down=GPIO.PUD_DOWN)
+loop = 0
+while loop < int(sys.argv[1]):
+    if not(GPIO.input(pin)) :
+        print('1')
+        sys.exit()   
+    loop += 1
+print("0")
 
-def action(pin) :
-    print ("1")
-    sys.exit()
-    return
-
-GPIO.add_event_detect(3, GPIO.RISING)
-GPIO.add_event_callback(3, action)
-
-
-
-try :
-    loop = 0
-    while loop < int(sys.argv[1]):
-        loop += 1
-    print("0")
-    sys.exit()
-
-except KeyboardInterrupt :
-    sys.exit()
