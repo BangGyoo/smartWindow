@@ -112,7 +112,7 @@ class PMS7003(object):
     chksum = self.chksum_cal(buffer)
     data = self.unpack_data(buffer)
 
-    print ("%s" % (data[self.DUST_AIR_2_5]))
+    print ((data[self.DUST_AIR_2_5]))
 
 
 

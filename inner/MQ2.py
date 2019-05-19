@@ -18,7 +18,6 @@ try :
     while loop < int(sys.argv[1]):
         loop += 1
     print("0")
-    sys.exit()
 
 except KeyboardInterrupt :
     sys.exit()

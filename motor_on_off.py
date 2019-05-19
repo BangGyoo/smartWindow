@@ -1,7 +1,8 @@
 import RPi.GPIO as GPIO # argv[1] is on/off flag
-import sys
+import subprocess
+import os,sys
 
-
+x = 0
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(26, GPIO.OUT)
 try :
@@ -15,6 +16,13 @@ try :
     
     else :
         print("input value error")
-
+    while(1) :
+       x = int(subprocess.check_output("python ./limit.py",shell=True))
+       print("result = %s"%x)
+       if x == 1 :
+           GPIO.output(26,False)
+           sys.exit()
+            
 except KeyboardInterrupt :
     GPIO.output(26,False)
+    sys.exit()

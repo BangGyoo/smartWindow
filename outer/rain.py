@@ -8,7 +8,7 @@ GPIO.setup(pin, GPIO.IN)
 
 loop = 0
 while loop < int(sys.argv[1]):
-    if not(GPIO.input(pin)) :
+    if (GPIO.input(pin)) :
         print('1')
         sys.exit()   
     loop += 1
