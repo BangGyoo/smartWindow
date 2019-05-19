@@ -5,7 +5,7 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(19,GPIO.OUT)
 GPIO.setup(26,GPIO.OUT)
 GPIO.setup(6,GPIO.IN,pull_up_down=GPIO.PUD_UP)
-GPIO.setup(23,GPIO.IN,pull_up_down=GPIO.PUD_UP)
+GPIO.setup(5,GPIO.IN,pull_up_down=GPIO.PUD_UP)
 
 #GPIO.setup(23,GPIO.IN)
 
@@ -22,18 +22,10 @@ try :
         GPIO.output(19,False)
     else :
         print("input value error")
-    loop23 = 0
-    loop6  = 0
     time.sleep(1)
     while(1) :
-        if bool(GPIO.input(23))==False :
-            loop23 +=1
-            print("23=%s"%loop23)
-        if GPIO.input(6)==False :
-            loop6  +=1
-            print("6=%s"%loop6)
-        if loop6 > 3 or loop23 > 3:
-            print("%5s, %5s"%(GPIO.input(23),bool(GPIO.input(23))))
+        if ((GPIO.input(5))==False) or ((GPIO.input(6))==False) :
+            print("%5s, %5s"%(GPIO.input(5),bool(GPIO.input(5))))
             print("limit!!")
             sys.exit()
         time.sleep(0.1)

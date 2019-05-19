@@ -15,21 +15,21 @@ def SetConfig(sensor_flag,output_flag, setter, where) :# 첫번째는 open/close
 
 def SetWindow(sensor_flags,output_flags) :
 	if output_flags[0] == True :
-		os.system("python3 ./inner/motor_cw_ccw.py cw 23")
+		os.system("python3 ./inner/motor_lmt.py cw")
 	elif output_flags[1] == True :
-		os.system("python3 ./inner/motor_cw_ccw.py ccw 23")
+		os.system("python3 ./inner/motor_lmt.py ccw")
 	elif output_flags[2] == True :
 		if sensor_flags[2] == True :
-			os.system("python3 ./inner/motor_cw_ccw.py cw 23")
+			os.system("python3 ./inner/motor_lmt.py cw")
 		else :
-			os.system("python3 ./inner/motor_cw_ccw.py ccw 23")
+			os.system("python3 ./inner/motor_lmt.py ccw")
 	elif output_flags[4] == True :
 		os.system("python3 ./moter_on_off.py cw 23")
 	elif output_flags[5] == True :
 		if sensor_flags[5] == True :
-			os.system("python3 ./inner/motor_cw_ccw.py cw 23")
+			os.system("python3 ./inner/motor_lmt.py cw")
 		else :
-			os.system("python3 ./inner/motor_cw_ccw.py ccw 23")
+			os.system("python3 ./inner/motor_lmt.py ccw")
 
 	if output_flags[3] == True :
 		if sensor_flags[3] == True :
@@ -59,8 +59,8 @@ try :
 			sensor_flag[0] = True
 			output_flag[0] = True
 		#############set motion#######################
-		motion_flag = int(subprocess.check_output("python3 ./outer/motion.py 20",shell=True))
-		if motion_flag == 1 :
+		motion_flag = float(subprocess.check_output("python3 ./outer/motion.py 20",shell=True))
+		if motion_flag < 20.0 :
 			sensor_flag[1] = True
 			output_flag[1] = True
 		###########set user configure############################
@@ -75,12 +75,13 @@ try :
 			output_flag[4] = True
 		############ set WHG(WHGab = WHO(Weight Humidity Outer) - WHI(Weight Humidity Inner)), dust
 		weightDust = float(subprocess.check_output("python3 ./outer/PMS7003.py 1",shell=True))
-		WO = (subprocess.check_output("python3 ./outer/dht11.py 20",shell=True))
-		WHO = float(WO[0:5])
-		WTO = float(WO[5:10])
-		WI = (subprocess.check_output("python3 ./inner/dht11.py 20",shell=True))
-		WHI = float(WI[0:5])
-		WTI = float(WI[5:10])
+		WO = (subprocess.check_output("python3 ./outer/dht11.py 1",shell=True))
+		WHO = float(WO[5:10])
+		
+		WTO = float(WO[15:20])
+		WI = (subprocess.check_output("python3 ./inner/dht11.py 1",shell=True))
+		WHI = float(WI[5:10])
+		WTI = float(WI[15:20])
 		WHG = 0.0
 		if abs(WHI - WHO) >= 0.1 :
 			if WHI <= 0.4 or WHI >= 0.6 :
@@ -116,7 +117,8 @@ try :
 			if sensor_flag[6] != weighted_f_flag :
 				sensor_flag[6] = False
 				sensor_flag[6] = True
-		
+		print(sensor_flag)
+		print(output_flag)
 		SetWindow(sensor_flag,output_flag)
 	'''	
 		users = SearchUser()
