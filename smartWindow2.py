@@ -5,7 +5,7 @@ W1=1.0; W2=1.0; W3=1.0; W4=1.0
 
 def SetConfig(sensor_flag,output_flag, setter, where) :# 첫번째는 open/close status , 두번째는 user_config의 세팅 속성을 나타낸다. 세번째는 해당 list의 position을 나타낸다.
 	moter_setter = (bool)(setter >> 1)	# int형을 list<bool>형태로 변경
-	flim_setter  = (bool)(setter)
+	flim_setter  = (bool)(setter & 0b01)
 	if sensor_flag[where] != moter_setter :
 		sensor_flag[where] = moter_setter
 		output_flag[where] = True  # set user moter configure
@@ -48,10 +48,8 @@ def SetWindow(sensor_flags,output_flags) :
 sensor_flag = [ False, False,   False,      False,    False, False,          False ]	# 초기화
 output_flag = [ False, False,   False,      False,    False, False,          False ]
 ############### gas , motion, conf_moter, conf_film,  rain , weighted_moter, weighted_flim
-i = 1
 try :
-	while i < 5 :
-		i+=1
+	while(True) :
 		#############set gas############################
 		gas_flag   = int(subprocess.check_output("python3 ./inner/MQ2.py 20",shell=True))
 		smoke_flag = int(subprocess.check_output("python3 ./inner/MQ5.py 20",shell=True))
@@ -59,15 +57,16 @@ try :
 			sensor_flag[0] = True
 			output_flag[0] = True
 		#############set motion#######################
-		motion_flag = float(subprocess.check_output("python3 ./outer/motion.py 20",shell=True))
+		motion_flag = float(subprocess.check_output("python3 ./outer/ultrasonic_motion.py",shell=True))
 		if motion_flag < 20.0 :
 			sensor_flag[1] = True
 			output_flag[1] = True
 		###########set user configure############################
 		user_config_file = open("user_conf.txt",'r')
 		user_config = int(user_config_file.readline())
-
 		SetConfig(sensor_flag,output_flag,user_config,2)
+		
+
 		rain_flag = int(subprocess.check_output("python3 ./outer/rain.py 20",shell=True))
 		#############set rain##############################
 		if rain_flag == 1 :
@@ -119,13 +118,8 @@ try :
 				sensor_flag[6] = True
 		print(sensor_flag)
 		print(output_flag)
-		SetWindow(sensor_flag,output_flag)
-	'''	
-		users = SearchUser()
-		for user in users :
-			if !(push_msg_flags) :
-				pushMassage()
-	'''
+		#SetWindow(sensor_flag,output_flag)
+
 except KeyboardInterrupt :
 	print("end")	
 	
