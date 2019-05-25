@@ -12,5 +12,6 @@ while loop < int(sys.argv[1]):
         print('1')
         sys.exit()   
     loop += 1
+    time.sleep(0.01)
 print("0")
 

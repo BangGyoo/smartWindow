@@ -1,9 +1,10 @@
 import RPi.GPIO as GPIO # argv[1] is flim on/off
 import sys
 
+
+GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(13, GPIO.OUT) 
-GPIO.setwarnings(False)
 
 
 if sys.argv[1] == "on" :

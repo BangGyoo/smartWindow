@@ -26,7 +26,7 @@ try:
 
     pulse_duration = pulse_end - pulse_start
     distance = pulse_duration * 17000
-    distance = round(distance, 2)
+    distance = round(distance, 5)
 
     print(distance)
 
