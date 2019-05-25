@@ -2,10 +2,11 @@ import os, sys, time # argv[1] is window status
 import subprocess
 import threading
 
-W1=1.0; W2=1.0; W3=1.0; W4=1.0
+W1=0.001; W2=0.0; W3=0.01; W4=0.0
 sensor_result = [ False, False, 0.0, 0.0, 0.0 , 0.0 , False, 0.0, 0.0,0.0]
 
 def Display() :
+	print("#################################")
 	print("smoke = " + str(sensor_result[1]))
 	print("rain = " + str(sensor_result[1]))
 	print("light = " + str(sensor_result[2]))
@@ -16,6 +17,7 @@ def Display() :
 	print("dust = " + str(sensor_result[7]))
 	print("outer humi = " + str(sensor_result[8]))
 	print("outer temp = " + str(sensor_result[9]))
+	print("################################")
 
 def SetConfig(sensor_flag,output_flag,before_setter, setter, where) :# 첫번째는 open/close status , 두번째는 user_config의 세팅 속성을 나타낸다. 세번째는 해당 list의 position을 나타낸다.
 	if before_setter == str(setter) :
@@ -118,25 +120,21 @@ def SetWeightedSum(sensor_flag,output_flag,weights) :
 	########### set WTG(WTGab = WTI(Weight Temperature Outer) - WTO(Weight Temperature Inner)), light
 	WTG = WTI - WTO
 	if (W3 * weightLight + W4 * WHG) > 1 :
-		weighted_f_flag = True
-	else :
 		weighted_f_flag = False
-	if weighted_m_flag == True :
-		if sensor_flag[5] != weighted_m_flag :
-			sensor_flag[5] = True
-			output_flag[5] = True
 	else :
-		if sensor_flag[5] != weighted_m_flag :
-			sensor_flag[5] = False
-			output_flag[5] = True
-		if weighted_f_flag == True :
-			if sensor_flag[6] != weighted_f_flag :
-				sensor_flag[6] = True
-				output_flag[6] = True
-		else :
-			if sensor_flag[6] != weighted_f_flag :
-				sensor_flag[6] = False
-				sensor_flag[6] = True
+		weighted_f_flag = True
+	if weighted_m_flag == True :
+		sensor_flag[5] = True
+		output_flag[5] = True
+	else :
+		sensor_flag[5] = False
+		output_flag[5] = True
+	if weighted_f_flag == True :
+		sensor_flag[6] = True
+		output_flag[6] = True
+	else :
+		sensor_flag[6] = False
+		output_flag[6] = True
 
 	print("success weighted sum")
 
@@ -144,6 +142,9 @@ def limitSwitch() :
     os.system("python3 ./inner/limitSwitch.py")
 
 def SetWindow(sensor_flags,output_flags) :
+	output_flags[0] = False; output_flags[1] = False
+	output_flags[2] = False; output_flags[3] = False
+	output_flags[4] = False
 	if output_flags[0] == True:
 		os.system("python3 ./inner/motor.py ccw")
 		print("reason gas")
@@ -215,10 +216,13 @@ try :
 		t = threading.Thread(target=SetDust,args=(sensor_flag,output_flag,weights))
 		threads.append(t)
 		t = threading.Thread(target=SetDHT11_outer,args=(sensor_flag,output_flag,weights))
-		threads.append(t)
+		#threads.append(t)
+		t.run()
 		t = threading.Thread(target=SetDHT11_inner,args=(sensor_flag,output_flag,weights))
-		threads.append(t)
+		#threads.append(t)
+		t.run()
 		t = threading.Thread(target=SetLight,args=(sensor_flag,output_flag,weights))
+		
 		threads.append(t)
 
 		for th in threads :

@@ -13,10 +13,10 @@ gpio.setup(echo, gpio.IN)
 try:
     gpio.output(trig, False)
     time.sleep(0.5)
-
     gpio.output(trig, True)
     time.sleep(0.00001)
     gpio.output(trig, False)
+
 
     while gpio.input(echo) == 0:
          pulse_start = time.time()
