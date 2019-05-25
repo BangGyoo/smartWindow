@@ -6,6 +6,7 @@ gpio.setmode(gpio.BCM)
 trig = 20
 echo = 21
 
+gpio.setwarnings(False)
 gpio.setup(trig, gpio.OUT)
 gpio.setup(echo, gpio.IN)
 

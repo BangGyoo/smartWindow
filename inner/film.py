@@ -3,6 +3,8 @@ import sys
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(13, GPIO.OUT) 
+GPIO.setwarnings(False)
+
 
 if sys.argv[1] == "on" :
     print ("Film On")

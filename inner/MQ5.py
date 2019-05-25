@@ -2,7 +2,7 @@ import time
 import RPi.GPIO as GPIO
 import sys # argv[1] is loop count
 
-pin = 3
+pin = 27
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(pin, GPIO.IN)
 
