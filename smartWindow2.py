@@ -3,21 +3,10 @@ import subprocess
 import threading
 
 W1=0.001; W2=0.0; W3=0.01; W4=0.0
-sensor_result = [ False, False, 0.0, 0.0, 0.0 , 0.0 , False, 0.0, 0.0,0.0]
+sensor_result = [ False, False, 0.0, False, 0.0 , 0.0 , False, 0.0, 0.0,0.0]
 
 def Display() :
-	print("#################################")
-	print("smoke = " + str(sensor_result[1]))
-	print("rain = " + str(sensor_result[1]))
-	print("light = " + str(sensor_result[2]))
-	print("disdance = " + str(sensor_result[3]))
-	print("inner humi = " + str(sensor_result[4]))
-	print("inner temp = " + str(sensor_result[5]))
-	print("gas = " + str(sensor_result[6]))
-	print("dust = " + str(sensor_result[7]))
-	print("outer humi = " + str(sensor_result[8]))
-	print("outer temp = " + str(sensor_result[9]))
-	print("################################")
+	print("%s %s %s %s %s %s %s %s %s %s"%(int(sensor_result[0]), int(sensor_result[1]), int(sensor_result[2]), int(sensor_result[3]), int(sensor_result[4]), int(sensor_result[5]), int(sensor_result[6]), int(sensor_result[7]), int(sensor_result[8]), float(sensor_result[9])))
 
 def SetConfig(sensor_flag,output_flag,before_setter, setter, where) :# 첫번째는 open/close status , 두번째는 user_config의 세팅 속성을 나타낸다. 세번째는 해당 list의 position을 나타낸다.
 	if before_setter == str(setter) :
@@ -39,7 +28,6 @@ def SetGas(sensor_flag,output_flag) :
 		output_flag[0] = True
 		sensor_result[0] = True
 		sensor_result[6] = True
-	print("success gas")	
 
 def SetMotion(sensor_flag,output_flag) :
 	motion_flag = float(subprocess.check_output("python3 ./outer/ultrasonic_motion.py",shell=True))
@@ -47,13 +35,11 @@ def SetMotion(sensor_flag,output_flag) :
 		sensor_flag[1] = True
 		output_flag[1] = True
 	sensor_result[3] = motion_flag
-	print("success motion")
 	
 def SetUserConf(sensor_flag,output_flag,befoe_user_config,user_config) :
 	user_config_file = open("user_conf.txt",'r')
 	user_config = int(user_config_file.readline())
 	SetConfig(sensor_flag,output_flag,before_user_config,user_config,2)
-	print("success userConfig")	
 
 def SetRain(sensor_flag,output_flag) :
 	rain_flag = int(subprocess.check_output("python3 ./outer/rain.py 20",shell=True))
@@ -63,13 +49,11 @@ def SetRain(sensor_flag,output_flag) :
 		sensor_result[1] = True
 	else :
 		sensor_result[1] = False
-	print("success rain")
 
 def SetDust(sensor_flag,output_flag,weights) :
 	weightDust = float(subprocess.check_output("python3 ./outer/PMS7003.py 1",shell=True))
 	sensor_result[7] = weightDust
 	weights[0] = weightDust
-	print("success dust")
 
 def SetDHT11_outer(sensor_flag,output_flag,weights) :
 	WO = (subprocess.check_output("python3 ./outer/dht11.py 1",shell=True))
@@ -80,7 +64,6 @@ def SetDHT11_outer(sensor_flag,output_flag,weights) :
 	sensor_result[8] = WTO
 	sensor_result[9] = WHO
 	
-	print("success DHT_outer")
 
 def SetDHT11_inner(sensor_flag,output_flag,weights) :
 	WI = (subprocess.check_output("python3 ./inner/dht11.py 1",shell=True))
@@ -91,13 +74,11 @@ def SetDHT11_inner(sensor_flag,output_flag,weights) :
 	sensor_result[4] = WTI
 	sensor_result[5] = WHI
 
-	print("success DHT_inner")
 
 def SetLight(sensor_flag,output_flag,weights) :
 	weightLight = float(subprocess.check_output("python3 ./outer/bh1750.py 2",shell=True))
 	weights[5] = weightLight
-	sensor_result[2] = weightLight
-	print("success Light")
+	sensor_result[2] = round(weightLight,1)
 
 def SetWeightedSum(sensor_flag,output_flag,weights) :
 	weightDust = weights[0]
@@ -136,54 +117,48 @@ def SetWeightedSum(sensor_flag,output_flag,weights) :
 		sensor_flag[6] = False
 		output_flag[6] = True
 
-	print("success weighted sum")
 
 def limitSwitch() :
-    os.system("python3 ./inner/limitSwitch.py")
+     subprocess.check_output("python3 ./inner/limitSwitch.py",shell=True)
 
 def SetWindow(sensor_flags,output_flags) :
-	output_flags[0] = False; output_flags[1] = False
-	output_flags[2] = False; output_flags[3] = False
-	output_flags[4] = False
 	if output_flags[0] == True:
-		os.system("python3 ./inner/motor.py ccw")
-		print("reason gas")
+		subprocess.check_output("python3 ./inner/motor.py ccw",shell=True)
 	elif output_flags[1] == True :
-		os.system("python3 ./inner/motor.py cw")
-		print("reason motion")
+		subprocess.check_output("python3 ./inner/motor.py cw",shell=True)
 	elif output_flags[2] == True :
 		if sensor_flags[2] == True :
-			os.system("python3 ./inner/motor.py ccw")
+			subprocess.check_output("python3 ./inner/motor.py ccw",shell=True)
 		else :
-			os.system("python3 ./inner/motor.py cw")
-		print("reason user conf")
+			subprocess.check_output("python3 ./inner/motor.py cw",shell=True)
 	elif output_flags[4] == True :
-		os.system("python3 ./inner/motor.py cw")
-		print("reason rain")
+		osubprocess.check_output("python3 ./inner/motor.py cw",shell=True)
 	elif output_flags[5] == True :
 		if sensor_flags[5] == True :
-			os.system("python3 ./inner/motor.py cw")
+			subprocess.check_output("python3 ./inner/motor.py cw",shell=True)
 		else :
-			os.system("python3 ./inner/motor.py ccw")
-		print("reason weighted sum")
+			subprocess.check_output("python3 ./inner/motor.py ccw",shell=True)
 
 	if output_flags[3] == True :
 		if sensor_flags[3] == True :
-			os.system("python3 ./inner/film.py on")
+			subprocess.check_output("python3 ./inner/film.py on",shell=True)
 		else :
-			os.system("python3 ./inner/film.py off")
+			subprocess.check_output("python3 ./inner/film.py off",shell=True)
 	elif output_flags[6] == True :
 		if sensor_flags[6] == True :
-			os.system("python3 ./inner/film.py on")
+			subprocess.check_output("python3 ./inner/film.py on",shell=True)
 		else :
-			os.system("python3 ./inner/film.py off")
+			subprocess.check_output("python3 ./inner/film.py off",shell=True)
 	
+def SetServer() :
+	subprocess.check_output("./own/windowServer /home/pi/smartWindow",shell=True)
 
 before_user_config = "22"
 user_config = "22"
 sensor_flag = [ False, False,   False,      False,    False, False,          False ]	# 초기화
 output_flag = [ False, False,   False,      False,    False, False,          False ]
-
+thread = threading.Thread(target=SetServer,args=())
+thread.start()
 
 ############### gas , motion, conf_moter, conf_film,  rain , weighted_moter, weighted_flim
 try :
@@ -232,14 +207,11 @@ try :
 		Display()
 		SetWeightedSum(sensor_flag,output_flag,weights)
 		
-		print(sensor_flag)
-		print(output_flag)
 		SetWindow(sensor_flag,output_flag)
 		before_user_config = str(user_config)
 
 except KeyboardInterrupt :
-	print("end")	
-	
+	sys.exit()	
 finally :
 	user_config_file = open("user_conf.txt",'w')
 	user_config_file.write("22")

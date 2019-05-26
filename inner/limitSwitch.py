@@ -21,6 +21,7 @@ try :
             window_status.close()
             GPIO.output(26,False)
             sys.exit()
+    time.sleep(0.01)
 
 except KeyboardInterrupt :
     window_status = open("window_status.txt",'w')
