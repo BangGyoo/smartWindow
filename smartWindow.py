@@ -1,92 +1,245 @@
-def Setconfig(sensor_flag, setter, where) :
-    flags = setter << where
-    sensor_flag &= flags
-W1=0.0,W2=0.0,W3=0.0,W4=0.0
-
 import os, sys, time # argv[1] is window status
-import enum
+import subprocess
+import threading
 
-class WIN_STATUS(enum.Enum) :
-    MOTOR = 0b10
-    FLIM  = 0b01
+W1=0.001; W2=0.0; W3=0.01; W4=0.0
+sensor_result = [ False, False, 0.0, False, 0.0 , 0.0 , False, 0.0, 0.0,0.0]
 
-class SENSOR_FLAG(enum.Enum) :
-    GAS        = 0b1000000
-    MOTION     = 0b0100000
-    USER_MOTOR = 0b0010000
-    USER_FLIM  = 0b0001000
-    RAIN       = 0b0000100
-    WEIGHTED_M = 0b0000010  #Weighted sum flag, ver.Motor
-    WEIGHTED_F = 0b0000001  #weighted sum flag, ver.Flim
+def Display() :
+	print("%s %s %s %s %s %s %s %s %s %s"%(int(sensor_result[0]), int(sensor_result[1]), int(sensor_result[2]), int(sensor_result[3]), int(sensor_result[4]), int(sensor_result[5]), int(sensor_result[6]), int(sensor_result[7]), int(sensor_result[8]), int(sensor_result[9])))
 
-window_status = int(sys.argv[1]) # 첫번째 인자
-timer_motor   = int(sys.argv[2]) # 두번째 인자
-push_msg_flag = int(sys.argv[3]) # 세번째 인자, true or false이다.
-sensor_flag   = int(sys.flag[4]) # 네번째 인자
+def SetConfig(sensor_flag,output_flag,before_setter, setter, where) :# 첫번째는 open/close status , 두번째는 user_config의 세팅 속성을 나타낸다. 세번째는 해당 list의 position을 나타낸다.
+	if before_setter == str(setter) :
+		return 
+	moter_setter = (bool)(setter >> 1)	# int형을 list<bool>형태로 변경
+	flim_setter  = (bool)(setter & 0b01)
+	
+	sensor_flag[where] = moter_setter
+	output_flag[where] = True  # set user moter configure
+	
+	sensor_flag[where+1] = flim_setter
+	output_flag[where+1] = True # set user flim configure
 
-gas_flag   = int(os.system("python ./inner/MQ2.py 20"))
-smoke_flag = int(os.system("python ./inner/MQ5.py 20"))
-if gas_flag == 1 or smoke_flag == 1 :
-    sensor_flag = sensor_flag | SENSOR_FLAG.GAS     # else는 처리하지 않는다. 감지시 1set
+def SetGas(sensor_flag,output_flag) :
+	gas_flag   = int(subprocess.check_output("python3 ./inner/MQ2.py 20",shell=True))
+	smoke_flag = int(subprocess.check_output("python3 ./inner/MQ5.py 20",shell=True))
+	if gas_flag == 1 or smoke_flag == 1 : # else는 처리하지 않는다. 감지시 1set
+		sensor_flag[0] = True
+		output_flag[0] = True
+		sensor_result[0] = True
+		sensor_result[6] = True
 
-motion_flag= int(os.system("python ./outer/motion.py 20"))
-if motion_flag == 1 :
-    sensor_flag = sensor_flag | SENSOR_FLAG.MOTION  # else는 처리하지 않는다. 감지시 1set
+def SetMotion(sensor_flag,output_flag) :
+	motion_flag = float(subprocess.check_output("python3 ./outer/ultrasonic_motion.py",shell=True))
+	if motion_flag < 20.0 and motion_flag > 1.0 :
+		sensor_flag[1] = True
+		output_flag[1] = True
+	sensor_result[3] = motion_flag
+	
+def SetUserConf(sensor_flag,output_flag,befoe_user_config,user_config) :
+	user_config_file = open("user_conf.txt",'r')
+	user_config = int(user_config_file.readline())
+	SetConfig(sensor_flag,output_flag,before_user_config,user_config,2)
 
-user_config_file = open("여기에 경로 적어야 함.txt",r)
-user_config = int(user_config_file.readline())
-############# 임시 제작 #########################
+def SetRain(sensor_flag,output_flag) :
+	rain_flag = int(subprocess.check_output("python3 ./outer/rain.py 20",shell=True))
+	if rain_flag == 1 :
+		sensor_flag[4] = True
+		output_flag[4] = True
+		sensor_result[1] = True
+	else :
+		sensor_result[1] = False
 
-SetConfig(sensor_flag, user_config,3)
-rain_flag = int(os.system("python ./outer/rain.py 20")
-if rain_flag == 1 :
-    sensor_flag = sensor_flag | SENSOR_FLAG.RAIN
+def SetDust(sensor_flag,output_flag,weights) :
+	weightDust = float(subprocess.check_output("python3 ./outer/PMS7003.py 1",shell=True))
+	sensor_result[7] = weightDust
+	weights[0] = weightDust
 
-weightDust = float(os.system("python ./outer/PMS7003.py 20"))
-WHO = float(os.system("python ./outer/dht11.py 20")) #WHO is Weight Huminity outer
-WHI = float(os.system("python ./inner/dht11_2.py 20")) # WHI is Weight Huminity inner
-if abs(WHI - WHO) >= 0.1 :
-    if WHI <= 0.4 || WHI >= 0.6 :
-        WHG = WHI - WHO
-if (W1 * weightDust + W2 * WHG) > 1 :
-    weighted_m_flag = 1
-else :
-    weighted_m_flag = 0
+def SetDHT11_outer(sensor_flag,output_flag,weights) :
+	try :
+		WO = (subprocess.check_output("python3 ./outer/dht11.py 1",shell=True))
+		WHO = float(WO[5:10])
+		WTO = float(WO[15:20])
+	except :
+		return
+	weights[1] = WHO
+	weights[2] = WTO
+	sensor_result[8] = WTO
+	sensor_result[9] = WHO
+	
 
-weightLight = float(os.system("python ./outer/light.py 20"))
-WTO = float(os.system("python ./outer/dht11.py 20"))
-WHI = float(os.system("python ./inner/dht11.py 20"))
-WHG = WHI - WTO # Weight Temperature Gap = weight temperature inner - weight temperature outer
-if (W3 * weightLight + W4 * WHG) > 1 :
-    weighted_f_flag = 1
-else :
-    weighted_f_flag = 0
-
-if weighted_m_flag == 1 :
-    sensor_flag = sensor_flag | SENSOR_FLAG.WEIGHTED_M
-if weighted_f_flag == 1 :
-    sensor_flag = sensor_flag | SENSOR_FLAG.WEIGHTED_F
-
-
-SetWindow(sensor_flag)
-users = SearchUser()
-for user in users :
-    if !(push_msg_flags) :
-        pushMassage()
-
-
- 
-
-
-
-
-
-
-
-
-
-
+def SetDHT11_inner(sensor_flag,output_flag,weights) :
+	try :
+		WI = (subprocess.check_output("python3 ./inner/dht11.py 1",shell=True))
+		WHI = float(WI[5:10])
+		WTI = float(WI[15:20])
+	except :
+		return
+	weights[3] = WHI
+	weights[4] = WTI
+	sensor_result[4] = WTI
+	sensor_result[5] = WHI
 
 
+def SetLight(sensor_flag,output_flag,weights) :
+	weightLight = float(subprocess.check_output("python3 ./outer/bh1750.py 2",shell=True))
+	weights[5] = weightLight
+	sensor_result[2] = round(weightLight,1)
+
+def SetWeightedSum(sensor_flag,output_flag,weights) :
+	weightDust = weights[0]
+	WHO	= weights[1]
+	WTO	= weights[2]
+	WHI	= weights[3]
+	WTI	= weights[4]
+	weightLight=weights[5]
+
+	WHG = 0.0
+	if abs(WHI - WHO) >= 0.1 :
+		if WHI <= 0.4 or WHI >= 0.6 :
+			WHG = WHI - WHO
+		else :
+			WHG = 0
+	if (W1 * weightDust + W2 * WHG) > 1 :
+		weighted_m_flag = True
+	else :
+		weighted_m_flag = False
+	########### set WTG(WTGab = WTI(Weight Temperature Outer) - WTO(Weight Temperature Inner)), light
+	WTG = WTI - WTO
+	if (W3 * weightLight + W4 * WHG) > 1 :
+		weighted_f_flag = False
+	else :
+		weighted_f_flag = True
+	if weighted_m_flag == True :
+		sensor_flag[5] = True
+		output_flag[5] = True
+	else :
+		sensor_flag[5] = False
+		output_flag[5] = True
+	if weighted_f_flag == True :
+		sensor_flag[6] = True
+		output_flag[6] = True
+	else :
+		sensor_flag[6] = False
+		output_flag[6] = True
 
 
+def limitSwitch() :
+     subprocess.check_output("python3 ./inner/limitSwitch.py",shell=True)
+
+def SetWindow(sensor_flags,output_flags) :
+	if output_flags[0] == True:
+		subprocess.check_output("python3 ./inner/motor.py ccw",shell=True)
+	elif output_flags[1] == True :
+		subprocess.check_output("python3 ./inner/motor.py cw",shell=True)
+	elif output_flags[2] == True :
+		if sensor_flags[2] == True :
+			subprocess.check_output("python3 ./inner/motor.py ccw",shell=True)
+		else :
+			subprocess.check_output("python3 ./inner/motor.py cw",shell=True)
+	elif output_flags[4] == True :
+		subprocess.check_output("python3 ./inner/motor.py cw",shell=True)
+	elif output_flags[5] == True :
+		if sensor_flags[5] == True :
+			subprocess.check_output("python3 ./inner/motor.py cw",shell=True)
+		else :
+			subprocess.check_output("python3 ./inner/motor.py ccw",shell=True)
+
+	if output_flags[3] == True :
+		if sensor_flags[3] == True :
+			subprocess.check_output("python3 ./inner/film.py on",shell=True)
+		else :
+			subprocess.check_output("python3 ./inner/film.py off",shell=True)
+	elif output_flags[6] == True :
+		if sensor_flags[6] == True :
+			subprocess.check_output("python3 ./inner/film.py on",shell=True)
+		else :
+			subprocess.check_output("python3 ./inner/film.py off",shell=True)
+	
+def SetServer() :
+	subprocess.check_output("./own/windowServer /home/pi/smartWindow",shell=True)
+
+before_user_config = "22"
+user_config = "22"
+sensor_flag = [ False, False,   False,      False,    False, False,          False ]	# 초기화
+output_flag = [ False, False,   False,      False,    False, False,          False ]
+thread = threading.Thread(target=SetServer,args=())
+thread.start()
+
+############### gas , motion, conf_moter, conf_film,  rain , weighted_moter, weighted_flim
+try :
+	while(True) :
+		output_flag[4] = False; output_flag[5] = False; output_flag[6] = False
+		threads = []
+		threads_dht = []
+		thread = threading.Thread(target=limitSwitch,args=())
+		thread.start()
+		#############set gas############################
+		#SetGas(sensor_flag,output_flag)
+		t = threading.Thread(target=SetGas,args=(sensor_flag,output_flag))
+		threads.append(t)
+		#############set motion#######################
+		#SetMotion(sensor_flag,output_flag)
+		t = threading.Thread(target=SetMotion,args=(sensor_flag,output_flag))
+		threads.append(t)
+		###########set user configure###########################
+		#SetUserConf(sensor_flag,output_flag)
+		t = threading.Thread(target=SetUserConf,args=(sensor_flag,output_flag,before_user_config,user_config))
+		threads.append(t)
+
+		#############set rain##############################
+		#SetRain(sensor_flag,output_flag)
+		t = threading.Thread(target=SetRain,args=(sensor_flag,output_flag))
+		threads.append(t)
+
+	############ set WHG(WHGab = WHO(Weight Humidity Outer) - WHI(Weight Humidity Inner)), dust
+		weights = [0,0,0,0,0,0]	
+
+		t = threading.Thread(target=SetDust,args=(sensor_flag,output_flag,weights))
+		threads.append(t)
+		t = threading.Thread(target=SetDHT11_outer,args=(sensor_flag,output_flag,weights))
+		threads_dht.append(t)
+		t = threading.Thread(target=SetDHT11_inner,args=(sensor_flag,output_flag,weights))
+		threads_dht.append(t)
+		for th in threads_dht :
+			th.start()
+		t = threading.Thread(target=SetLight,args=(sensor_flag,output_flag,weights))
+		
+		threads.append(t)
+
+		for th in threads :
+			th.start()
+		for th in threads :
+			th.join()
+		Display()
+		SetWeightedSum(sensor_flag,output_flag,weights)
+		
+		SetWindow(sensor_flag,output_flag)
+		before_user_config = str(user_config)
+
+
+except KeyboardInterrupt :
+	sys.exit()	
+finally :
+	user_config_file = open("user_conf.txt",'w')
+	user_config_file.write("22")
+	user_config_file.close()
+
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+	
