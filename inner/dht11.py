@@ -26,11 +26,11 @@ try :
         else:
             print("Failed to get reading.")
         loop += 1
+    average_t = average_t / int(sys.argv[1])
+    average_h = average_h / int(sys.argv[1])
 except :
-    average_h = 0.0
-    average_t = 0.0
-average_t = average_t / int(sys.argv[1])
-average_h = average_h / int(sys.argv[1])
+    average_h = -1.0
+    average_t = -1.0
 
 print("%10s%10s"%(average_t,average_h))
     

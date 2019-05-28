@@ -30,11 +30,14 @@ def SetGas(sensor_flag,output_flag) :
 		sensor_result[6] = True
 
 def SetMotion(sensor_flag,output_flag) :
-	motion_flag = float(subprocess.check_output("python3 ./outer/ultrasonic_motion.py",shell=True))
-	if motion_flag < 20.0 and motion_flag > 1.0 :
-		sensor_flag[1] = True
-		output_flag[1] = True
-	sensor_result[3] = motion_flag
+	try :
+		motion_flag = float(subprocess.check_output("python3 ./outer/ultrasonic_motion.py",shell=True))
+		if motion_flag < 20.0 and motion_flag > 1.0 :
+			sensor_flag[1] = True
+			output_flag[1] = True
+	except :
+		motion_flag = -1
+		sensor_result[3] = motion_flag
 	
 def SetUserConf(sensor_flag,output_flag,befoe_user_config,user_config) :
 	user_config_file = open("user_conf.txt",'r')
@@ -59,26 +62,28 @@ def SetDHT11_outer(sensor_flag,output_flag,weights) :
 	try :
 		WO = (subprocess.check_output("python3 ./outer/dht11.py 1",shell=True))
 		WHO = float(WO[5:10])
-		WTO = float(WO[15:20])
+		WTO = float(WO[10:20])
 	except :
-		return
-	weights[1] = WHO
-	weights[2] = WTO
-	sensor_result[8] = WTO
-	sensor_result[9] = WHO
-	
+		return	
+	if WHO != -1 and WTO != -1 :
+		weights[1] = WHO
+		weights[2] = WTO
+		sensor_result[8] = WTO
+		sensor_result[9] = WHO
+		
 
 def SetDHT11_inner(sensor_flag,output_flag,weights) :
 	try :
 		WI = (subprocess.check_output("python3 ./inner/dht11.py 1",shell=True))
 		WHI = float(WI[5:10])
-		WTI = float(WI[15:20])
+		WTI = float(WI[10:20])
 	except :
 		return
-	weights[3] = WHI
-	weights[4] = WTI
-	sensor_result[4] = WTI
-	sensor_result[5] = WHI
+	if WHI != -1 and WTI != -1 :
+		weights[3] = WHI
+		weights[4] = WTI
+		sensor_result[4] = WTI
+		sensor_result[5] = WHI
 
 
 def SetLight(sensor_flag,output_flag,weights) :
@@ -163,18 +168,29 @@ before_user_config = "22"
 user_config = "22"
 sensor_flag = [ False, False,   False,      False,    False, False,          False ]	# 초기화
 output_flag = [ False, False,   False,      False,    False, False,          False ]
-thread = threading.Thread(target=SetServer,args=())
+
+
+weights = [0,0,0,0,0,0]	
+thread = threading.Thread(target=SetWindow,args=(sensor_flag,output_flag))
+thread.start()
+output_flag[4] = False; output_flag[5] = False; output_flag[6] = False
+threads_dht = []
+thread = threading.Thread(target=limitSwitch,args=())
 thread.start()
 
+t = threading.Thread(target=SetDHT11_outer,args=(sensor_flag,output_flag,weights))	
+threads_dht.append(t)
+t = threading.Thread(target=SetDHT11_inner,args=(sensor_flag,output_flag,weights))
+threads_dht.append(t)
+for th in threads_dht :
+	th.start()
+		
+
+#############set gas############################
 ############### gas , motion, conf_moter, conf_film,  rain , weighted_moter, weighted_flim
 try :
 	while(True) :
-		output_flag[4] = False; output_flag[5] = False; output_flag[6] = False
 		threads = []
-		threads_dht = []
-		thread = threading.Thread(target=limitSwitch,args=())
-		thread.start()
-		#############set gas############################
 		#SetGas(sensor_flag,output_flag)
 		t = threading.Thread(target=SetGas,args=(sensor_flag,output_flag))
 		threads.append(t)
@@ -192,29 +208,20 @@ try :
 		t = threading.Thread(target=SetRain,args=(sensor_flag,output_flag))
 		threads.append(t)
 
-	############ set WHG(WHGab = WHO(Weight Humidity Outer) - WHI(Weight Humidity Inner)), dust
-		weights = [0,0,0,0,0,0]	
+		############ set WHG(WHGab = WHO(Weight Humidity Outer) - WHI(Weight Humidity Inner)), dust
 
+		t = threading.Thread(target=SetLight,args=(sensor_flag,output_flag,weights))
+		threads.append(t)
 		t = threading.Thread(target=SetDust,args=(sensor_flag,output_flag,weights))
 		threads.append(t)
-		t = threading.Thread(target=SetDHT11_outer,args=(sensor_flag,output_flag,weights))
-		threads_dht.append(t)
-		t = threading.Thread(target=SetDHT11_inner,args=(sensor_flag,output_flag,weights))
-		threads_dht.append(t)
-		for th in threads_dht :
-			th.start()
-		t = threading.Thread(target=SetLight,args=(sensor_flag,output_flag,weights))
-		
-		threads.append(t)
-
 		for th in threads :
 			th.start()
 		for th in threads :
 			th.join()
+		
 		Display()
 		SetWeightedSum(sensor_flag,output_flag,weights)
-		
-		SetWindow(sensor_flag,output_flag)
+		#SetWindow(sensor_flag,output_flag)
 		before_user_config = str(user_config)
 
 

@@ -60,13 +60,15 @@ def readLight(addr=DEVICE):
   return convertToNumber(data)
 
 def main():
-  loop=0
-  lightLevel=0.0
-  while loop < int(sys.argv[1]):
-    lightLevel+=float(readLight())
-    time.sleep(0.5)
-    loop+=1
-
-  print(lightLevel/float(sys.argv[1]))
+  try : 
+      loop=0
+      lightLevel=0.0
+      while loop < int(sys.argv[1]):
+        lightLevel+=float(readLight())
+        time.sleep(0.5)
+        loop+=1
+      print(lightLevel/float(sys.argv[1]))
+  except :
+      print(-1)
 if __name__=="__main__":
    main()
