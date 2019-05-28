@@ -1,12 +1,47 @@
-import os, sys, time # argv[1] is window status
+import os, sys,time # argv[1] is window status
 import subprocess
 import threading
-
+import socket
 W1=0.001; W2=0.0; W3=0.01; W4=0.0
 sensor_result = [ False, False, 0.0, False, 0.0 , 0.0 , False, 0.0, 0.0,0.0]
+window_status = "2"
+
+def makeString() :
+	return "%d %d %d %d %d %d %d %d %d %d %d"%(int(sensor_result[0]), int(sensor_result[1]), int(sensor_result[2]), int(sensor_result[3]), int(sensor_result[4]), int(sensor_result[5]), int(sensor_result[6]), int(sensor_result[7]), int(sensor_result[8]), int(sensor_result[9]), int(window_status))
 
 def Display() :
-	print("%s %s %s %s %s %s %s %s %s %s"%(int(sensor_result[0]), int(sensor_result[1]), int(sensor_result[2]), int(sensor_result[3]), int(sensor_result[4]), int(sensor_result[5]), int(sensor_result[6]), int(sensor_result[7]), int(sensor_result[8]), int(sensor_result[9])))
+	print(makeString())
+
+def decoding(args) :
+	args = args
+	result = args.decode()
+	print(result)
+
+def Server() :
+	try:
+    		s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    		print("소켓 생성완료")
+	except socket.error as err :
+    		print("에러 발생 원인 :  %s"%(err))
+		
+	temp=makeString()
+	msg=bytearray(temp,'utf-8')
+	HOST='localhost'
+	port=1234
+	s.bind((HOST,port))
+	while(True) :
+		w = open("./window_status.txt","r")
+		window_status = w.readline()
+		w.close()
+
+		s.listen(5)
+		print("%d 포트로 연결을 기다리는중"%(port))
+
+		c, addr = s.accept()
+		print(addr,"사용자가 접속함")
+		c.send(msg)
+		c.close()
+	
 
 def SetConfig(sensor_flag,output_flag,before_setter, setter, where) :# 첫번째는 open/close status , 두번째는 user_config의 세팅 속성을 나타낸다. 세번째는 해당 list의 position을 나타낸다.
 	if before_setter == str(setter) :
@@ -59,9 +94,13 @@ def SetRain(sensor_flag,output_flag) :
 		sensor_result[1] = False
 
 def SetDust(sensor_flag,output_flag,weights) :
-	weightDust = float(subprocess.check_output("python3 ./outer/PMS7003.py 1",shell=True))
-	sensor_result[7] = weightDust
-	weights[0] = weightDust
+    try :
+        weightDust = float(subprocess.check_output("python3 ./outer/PMS7003.py 1",shell=True))
+        sensor_result[7] = weightDust
+        weights[0] = weightDust
+    except :
+        sensor_result[7] = -1.0
+        weights[0] = -1.0
 
 def SetDHT11_outer(sensor_flag,output_flag,weights) :
 	try :
@@ -134,11 +173,11 @@ def SetWeightedSum(sensor_flag,output_flag,weights) :
 		output_flag[6] = True
 
 def limitSwitch() :
-	subprocess.check_output("python3 ./inner/limitSwitch.py",shell=True)
+	while(True) :
+		subprocess.check_output("python3 ./inner/limitSwitch.py",shell=True)
 
 
 def SetWindow(sensor_flags,output_flags) :
-
 	while(True) :
 		if output_flags[0] == True:
 			subprocess.check_output("python3 ./inner/motor.py ccw",shell=True)
@@ -167,8 +206,6 @@ def SetWindow(sensor_flags,output_flags) :
 				subprocess.check_output("python3 ./inner/film.py on",shell=True)
 			else :
 				subprocess.check_output("python3 ./inner/film.py off",shell=True)
-		limitSwitch()
-	
 	
 def SetServer() :
 	subprocess.check_output("./own/windowServer /home/pi/smartWindow",shell=True)
@@ -182,6 +219,11 @@ output_flag = [ False, False,   False,      False,    False, False,          Fal
 weights = [0,0,0,0,0,0]	
 thread = threading.Thread(target=SetWindow,args=(sensor_flag,output_flag))
 thread.start()
+thread = threading.Thread(target=limitSwitch,args=())
+thread.start()
+thread = threading.Thread(target=Server,args=())
+thread.start()
+
 output_flag[4] = False; output_flag[5] = False; output_flag[6] = False
 threads_dht = []
 
@@ -231,12 +273,10 @@ try :
 		#SetWindow(sensor_flag,output_flag)
 		before_user_config = str(user_config)
 
-
-except KeyboardInterrupt :
-	sys.exit()	
 finally :
 	user_config_file = open("user_conf.txt",'w')
 	user_config_file.write("22")
+	os.system("python3 cleanup.py")
 	user_config_file.close()
 
 

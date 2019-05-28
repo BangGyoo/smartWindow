@@ -87,11 +87,14 @@ class PMS7003(object):
           
           return True
         else:
-          print("Chksum err")
+          #print("Chksum err")
+          print(-3.0)
       else:
-        print("Header err")
+        #print("Header err")
+        print(-2.0)
     else:
-      print("Protol err")
+      #print("Protol err")
+      print(-1.0)
 
     return False 
 
@@ -129,27 +132,25 @@ Speed = 9600
 
 # example
 if __name__=='__main__':
+  try :
+    #serial setting 
+    ser = serial.Serial(SERIAL_PORT, Speed, timeout = 1)
 
-  #serial setting 
-  ser = serial.Serial(SERIAL_PORT, Speed, timeout = 1)
-
-  dust = PMS7003()
-  loop = 0
-  while loop < int(sys.argv[1]) :
-    loop+=1
-    ser.flushInput()
-    buffer = ser.read(1024)
-
-    if(dust.protocol_chk(buffer)):
-    
-    
-      # print data
-      dust.print_serial(buffer)
-      
-    else:
-
-      print("DATA read fail...")     
-
-
-  ser.close()
-
+    dust = PMS7003()
+    loop = 0
+    while loop < int(sys.argv[1]) :
+      loop+=1
+      ser.flushInput()
+      buffer = ser.read(1024)
+      if(dust.protocol_chk(buffer)):
+	    
+	    
+        # print data
+        dust.print_serial(buffer)
+	      
+      else:
+        print("-1")     
+    ser.close()
+  except :
+    #print("-1") 
+    sys.exit()
