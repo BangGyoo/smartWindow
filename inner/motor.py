@@ -11,8 +11,6 @@ try :
     window = window_status.readline()
     window_status.close()
 
-        
-
     window_status = open("window_status.txt",'w')
     
     if (sys.argv[1] == "cw" and window != "0") :
@@ -21,6 +19,7 @@ try :
         print("set close")
         window_status.write("2")
         GPIO.output(19,True)
+        window_status.close()
 
     elif (sys.argv[1] == "ccw" and window != "1") :
         GPIO.output(26, True)
@@ -28,13 +27,10 @@ try :
         window_status.write("2")
         print("set open")
         GPIO.output(19,False)
-    else :
-        sys.exit()
-
-    window_status.close()
+        window_status.close()
+    
     time.sleep(0.5)
 
 except KeyboardInterrupt :
     window_status = open("window_status.txt",'w')
-    window_status.write("2")    
     sys.exit()

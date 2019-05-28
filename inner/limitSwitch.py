@@ -9,7 +9,8 @@ GPIO.setup(6,GPIO.IN,pull_up_down=GPIO.PUD_UP)
 GPIO.setup(5,GPIO.IN,pull_up_down=GPIO.PUD_UP)
 
 try :
-    while(1) :
+    loop=0
+    while loop < 5 :
         if ((GPIO.input(5))==False) or ((GPIO.input(6))==False) :
             window_status = open("window_status.txt",'w')
             if not(GPIO.input(5)) :
@@ -18,16 +19,11 @@ try :
             else :
                 window_status.write("0")
                 print("close limit")
-            window_status.close()
             GPIO.output(26,False)
+            window_status.close()
             sys.exit()
-    time.sleep(0.01)
+        loop+=1
 
 except KeyboardInterrupt :
-    window_status = open("window_status.txt",'w')
-    window_status.write("2")
-    window_status.close()
     sys.exit()
-finally :
-    GPIO.output(26,False)
 

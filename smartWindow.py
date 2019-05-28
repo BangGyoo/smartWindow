@@ -35,9 +35,12 @@ def SetMotion(sensor_flag,output_flag) :
 		if motion_flag < 20.0 and motion_flag > 1.0 :
 			sensor_flag[1] = True
 			output_flag[1] = True
+			sensor_result[3] = True
+		else :
+			sensor_result[3] = False
 	except :
 		motion_flag = -1
-		sensor_result[3] = motion_flag
+		sensor_result[3] = False
 	
 def SetUserConf(sensor_flag,output_flag,befoe_user_config,user_config) :
 	user_config_file = open("user_conf.txt",'r')
@@ -51,6 +54,8 @@ def SetRain(sensor_flag,output_flag) :
 		output_flag[4] = True
 		sensor_result[1] = True
 	else :
+		sensor_flag[4] = False
+		output_flag[4] = False
 		sensor_result[1] = False
 
 def SetDust(sensor_flag,output_flag,weights) :
@@ -128,38 +133,42 @@ def SetWeightedSum(sensor_flag,output_flag,weights) :
 		sensor_flag[6] = False
 		output_flag[6] = True
 
-
 def limitSwitch() :
-     subprocess.check_output("python3 ./inner/limitSwitch.py",shell=True)
+	subprocess.check_output("python3 ./inner/limitSwitch.py",shell=True)
+
 
 def SetWindow(sensor_flags,output_flags) :
-	if output_flags[0] == True:
-		subprocess.check_output("python3 ./inner/motor.py ccw",shell=True)
-	elif output_flags[1] == True :
-		subprocess.check_output("python3 ./inner/motor.py cw",shell=True)
-	elif output_flags[2] == True :
-		if sensor_flags[2] == True :
-			subprocess.check_output("python3 ./inner/motor.py ccw",shell=True)
-		else :
-			subprocess.check_output("python3 ./inner/motor.py cw",shell=True)
-	elif output_flags[4] == True :
-		subprocess.check_output("python3 ./inner/motor.py cw",shell=True)
-	elif output_flags[5] == True :
-		if sensor_flags[5] == True :
-			subprocess.check_output("python3 ./inner/motor.py cw",shell=True)
-		else :
-			subprocess.check_output("python3 ./inner/motor.py ccw",shell=True)
 
-	if output_flags[3] == True :
-		if sensor_flags[3] == True :
-			subprocess.check_output("python3 ./inner/film.py on",shell=True)
-		else :
-			subprocess.check_output("python3 ./inner/film.py off",shell=True)
-	elif output_flags[6] == True :
-		if sensor_flags[6] == True :
-			subprocess.check_output("python3 ./inner/film.py on",shell=True)
-		else :
-			subprocess.check_output("python3 ./inner/film.py off",shell=True)
+	while(True) :
+		if output_flags[0] == True:
+			subprocess.check_output("python3 ./inner/motor.py ccw",shell=True)
+		elif output_flags[1] == True :
+			subprocess.check_output("python3 ./inner/motor.py cw",shell=True)
+		elif output_flags[2] == True :
+			if sensor_flags[2] == True :
+				subprocess.check_output("python3 ./inner/motor.py ccw",shell=True)
+			else :
+				subprocess.check_output("python3 ./inner/motor.py cw",shell=True)
+		elif output_flags[4] == True :
+			subprocess.check_output("python3 ./inner/motor.py cw",shell=True)
+		elif output_flags[5] == True :
+			if sensor_flags[5] == True :
+				subprocess.check_output("python3 ./inner/motor.py cw",shell=True)
+			else :
+				subprocess.check_output("python3 ./inner/motor.py ccw",shell=True)
+
+		if output_flags[3] == True :
+			if sensor_flags[3] == True :
+				subprocess.check_output("python3 ./inner/film.py on",shell=True)
+			else :
+				subprocess.check_output("python3 ./inner/film.py off",shell=True)
+		elif output_flags[6] == True :
+			if sensor_flags[6] == True :
+				subprocess.check_output("python3 ./inner/film.py on",shell=True)
+			else :
+				subprocess.check_output("python3 ./inner/film.py off",shell=True)
+		limitSwitch()
+	
 	
 def SetServer() :
 	subprocess.check_output("./own/windowServer /home/pi/smartWindow",shell=True)
@@ -175,8 +184,6 @@ thread = threading.Thread(target=SetWindow,args=(sensor_flag,output_flag))
 thread.start()
 output_flag[4] = False; output_flag[5] = False; output_flag[6] = False
 threads_dht = []
-thread = threading.Thread(target=limitSwitch,args=())
-thread.start()
 
 t = threading.Thread(target=SetDHT11_outer,args=(sensor_flag,output_flag,weights))	
 threads_dht.append(t)
