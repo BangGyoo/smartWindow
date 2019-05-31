@@ -2,11 +2,27 @@ import os, sys,time # argv[1] is window status
 import subprocess
 import threading
 import socket
-W1=0.001; W2=0.0; W3=0.01; W4=0.0
+import keyboard
+
+W1=0.005; W2=1.1; W3=0.01; W4=1.0
 sensor_result = [ False, False, 0.0, False, 0.0 , 0.0 , False, 0.0, 0.0,0.0]
 window_status = "2"
+#################### 디버 그나중 에삭 제####################
+window_conf = open("debug_conf.txt",'r')
+setter = window_conf.readline()
+window_conf.close()
+user_conf = []
+user_conf.append(float(setter[0:3]))
+user_conf.append(float(setter[3:5]))
+
+def GaussianNomalization(x,mean,deviation,K=3) :
+	print('x = %f mean = %f '%(x,mean))
+	return ((x - mean) / (K * deviation))
 
 def makeString() :
+	w = open("./window_status.txt","r")
+	window_status = w.readline()
+	w.close()
 	return "%d %d %d %d %d %d %d %d %d %d %d"%(int(sensor_result[0]), int(sensor_result[1]), int(sensor_result[2]), int(sensor_result[3]), int(sensor_result[4]), int(sensor_result[5]), int(sensor_result[6]), int(sensor_result[7]), int(sensor_result[8]), int(sensor_result[9]), int(window_status))
 
 def Display() :
@@ -17,22 +33,26 @@ def decoding(args) :
 	result = args.decode()
 	print(result)
 
+def Client() :
+	s=socket.socker(socket.AF_INET,socket.SOCK_STREAM)
+	
+	port = 4321
+	s.connect(('',port))
+	decoding(s.recv(1024))
+	s.close()
+
 def Server() :
 	try:
     		s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     		print("소켓 생성완료")
 	except socket.error as err :
     		print("에러 발생 원인 :  %s"%(err))
-		
-	temp=makeString()
-	msg=bytearray(temp,'utf-8')
-	HOST='localhost'
+	HOST=''
 	port=1234
 	s.bind((HOST,port))
 	while(True) :
-		w = open("./window_status.txt","r")
-		window_status = w.readline()
-		w.close()
+		temp=makeString()
+		msg=bytearray(temp,'utf-8')
 
 		s.listen(5)
 		print("%d 포트로 연결을 기다리는중"%(port))
@@ -103,31 +123,35 @@ def SetDust(sensor_flag,output_flag,weights) :
         weights[0] = -1.0
 
 def SetDHT11_outer(sensor_flag,output_flag,weights) :
-	try :
-		WO = (subprocess.check_output("python3 ./outer/dht11.py 1",shell=True))
-		WHO = float(WO[5:10])
-		WTO = float(WO[10:20])
-	except :
-		return	
-	if WHO != -1 and WTO != -1 :
-		weights[1] = WHO
-		weights[2] = WTO
-		sensor_result[8] = WTO
-		sensor_result[9] = WHO
+	while(True) :
+		try :
+			WO = (subprocess.check_output("python3 ./outer/dht11.py 1",shell=True))
+			WTO = float(WO[5:10])
+			WHO = float(WO[10:20])
+			print("outer success")
+		except :
+			return	
+		if WHO != -1 and WTO != -1 :
+			weights[1] = WHO
+			weights[2] = WTO
+			sensor_result[8] = WHO
+			sensor_result[9] = WTO
 		
 
 def SetDHT11_inner(sensor_flag,output_flag,weights) :
-	try :
-		WI = (subprocess.check_output("python3 ./inner/dht11.py 1",shell=True))
-		WHI = float(WI[5:10])
-		WTI = float(WI[10:20])
-	except :
-		return
-	if WHI != -1 and WTI != -1 :
-		weights[3] = WHI
-		weights[4] = WTI
-		sensor_result[4] = WTI
-		sensor_result[5] = WHI
+	while(True) :
+		try :
+			WI = (subprocess.check_output("python3 ./inner/dht11.py 1",shell=True))
+			WHI = float(WI[5:10])
+			WTI = float(WI[10:20])
+			print("inner success")
+		except :
+			return
+		if WHI != -1 and WTI != -1 :
+			weights[3] = WHI
+			weights[4] = WTI
+			sensor_result[4] = WHI
+			sensor_result[5] = WTI
 
 
 def SetLight(sensor_flag,output_flag,weights) :
@@ -143,19 +167,25 @@ def SetWeightedSum(sensor_flag,output_flag,weights) :
 	WTI	= weights[4]
 	weightLight=weights[5]
 
+	gap = 1 - abs(GaussianNomalization(WHO,user_conf[0],20.0,3))
+	print(gap)
 	WHG = 0.0
 	if abs(WHI - WHO) >= 0.1 :
 		if WHI <= 0.4 or WHI >= 0.6 :
 			WHG = WHI - WHO
 		else :
 			WHG = 0
-	if (W1 * weightDust + W2 * WHG) > 1 :
+	#if (W1 * weightDust + W2 * WHG) > 1 :
+	if (W1 * weightDust + W2 * gap ) > 1 :
 		weighted_m_flag = True
 	else :
 		weighted_m_flag = False
 	########### set WTG(WTGab = WTI(Weight Temperature Outer) - WTO(Weight Temperature Inner)), light
 	WTG = WTI - WTO
-	if (W3 * weightLight + W4 * WHG) > 1 :
+	#if (W3 * weightLight + W4 * WHG) > 1 :
+	gap = GaussianNomalization(WTO,user_conf[1],1.5,3)
+	print(gap)
+	if (W3 * weightLight + W4 * gap) > 1 :
 		weighted_f_flag = False
 	else :
 		weighted_f_flag = True
@@ -207,9 +237,6 @@ def SetWindow(sensor_flags,output_flags) :
 			else :
 				subprocess.check_output("python3 ./inner/film.py off",shell=True)
 	
-def SetServer() :
-	subprocess.check_output("./own/windowServer /home/pi/smartWindow",shell=True)
-
 before_user_config = "22"
 user_config = "22"
 sensor_flag = [ False, False,   False,      False,    False, False,          False ]	# 초기화
@@ -233,7 +260,17 @@ t = threading.Thread(target=SetDHT11_inner,args=(sensor_flag,output_flag,weights
 threads_dht.append(t)
 for th in threads_dht :
 	th.start()
-		
+
+def interface() :
+	while(True) :
+		if keyboard.is_pressed('q') :
+			print("clear")
+			sensor_flag = [ False, False,   False,      False,    False, False,          False ]	# 초기화
+			output_flag = [ False, False,   False,      False,    False, False,          False ] 
+			sensor_result = [ False, False, 0.0, False, 0.0 , 0.0 , False, 0.0, 0.0,0.0]
+			
+t = threading.Thread(target=interface,args=())
+t.start()
 
 #############set gas############################
 ############### gas , motion, conf_moter, conf_film,  rain , weighted_moter, weighted_flim
@@ -276,7 +313,7 @@ try :
 finally :
 	user_config_file = open("user_conf.txt",'w')
 	user_config_file.write("22")
-	os.system("python3 cleanup.py")
+	#os.system("python3 cleanup.py")
 	user_config_file.close()
 
 

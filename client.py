@@ -11,7 +11,7 @@ except socket.error as err :
  
 port=1234
  
-s.connect(('localhost',port))
+s.connect(('',port))
 decoding(s.recv(1024))
 
 s.close()
