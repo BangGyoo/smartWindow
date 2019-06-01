@@ -83,6 +83,7 @@ def SetGas(sensor_flag,output_flag) :
 		output_flag[0] = True
 		sensor_result[0] = True
 		sensor_result[6] = True
+		print("debug")
 
 def SetMotion(sensor_flag,output_flag) :
 	try :
@@ -142,8 +143,8 @@ def SetDHT11_inner(sensor_flag,output_flag,weights) :
 	while(True) :
 		try :
 			WI = (subprocess.check_output("python3 ./inner/dht11.py 1",shell=True))
-			WHI = float(WI[5:10])
-			WTI = float(WI[10:20])
+			WTI = float(WI[5:10])
+			WHI = float(WI[10:20])
 			print("inner success")
 		except :
 			return
@@ -262,13 +263,20 @@ for th in threads_dht :
 	th.start()
 
 def interface() :
+	global sensor_flag
+	global output_flag
+	global sensor_result
 	while(True) :
 		if keyboard.is_pressed('q') :
+			for i in range(len(sensor_flag)) :
+				sensor_flag[i] = False
+			for i in range(len(output_flag)) :
+				output_flag[i] = False
+			for i in range(len(sensor_result)) :
+				sensor_result[i] = False
 			print("clear")
-			sensor_flag = [ False, False,   False,      False,    False, False,          False ]	# 초기화
-			output_flag = [ False, False,   False,      False,    False, False,          False ] 
-			sensor_result = [ False, False, 0.0, False, 0.0 , 0.0 , False, 0.0, 0.0,0.0]
-			
+			Display()
+			time.sleep(0.1)
 t = threading.Thread(target=interface,args=())
 t.start()
 
