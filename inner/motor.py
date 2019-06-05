@@ -34,7 +34,7 @@ try :
         print("set open")
         GPIO.output(19,False)
         window_status.close()
-    time.sleep(0.5)
+    time.sleep(1.0)
     #thread = threading.Thread(target=LimitSwitch,args=())
     #thread.start()
 
