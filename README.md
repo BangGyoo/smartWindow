@@ -11,7 +11,7 @@
  
 | output | weighted sum |
 |---|---|
-| ![img3](/documentation/output.jpg) | ![img4](/documentation/Weightedi%20Sum.jpg) |
+| ![img3](/documentation/output.jpg) | ![img4](/documentation/Weighted%20Sum.jpg) |
 
 [//]: #
 [link]: <https://www.dbpia.co.kr/journal/articleDetail?nodeId=NODE07613626>
